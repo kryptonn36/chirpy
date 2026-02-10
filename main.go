@@ -23,7 +23,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apicfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apicfg.handlerReset)
-
+        mux.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
