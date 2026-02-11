@@ -23,7 +23,8 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apicfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apicfg.handlerReset)
-        mux.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
+	mux.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
+
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
@@ -33,7 +34,7 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request){
+func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	hits := cfg.fileserverHits.Load()
