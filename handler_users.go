@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	// "github.com/kryptonn36/chirpy/internal/database"
+	"github.com/kryptonn36/chirpy/internal/auth"
+	"github.com/kryptonn36/chirpy/internal/database"
 )
 
-type email_r struct{
+type paramater struct{
+	Password string `json:"password"`
 	Email string `json:"email"`
 }
 type returnVals struct{
@@ -21,15 +23,29 @@ type returnVals struct{
 
 func (cfg *apiConfig) handlerUsers(w http.ResponseWriter, r *http.Request){
 	// decode the error from json to struct to get email
-	req_email := email_r{}
+	params := paramater{}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&req_email)
+	err := decoder.Decode(&params)
 	if err!=nil{
 		respondWithError(w, http.StatusInternalServerError,"Error in email request", err)
 	}
 
+	// creating hash and checking password
+	hash_paswd, err := auth.HashPassword(params.Password)
+	if err!=nil{
+		respondWithError(w, http.StatusInternalServerError, "error in HashPassword function", err)
+	}
+	// boolean, err:= auth.CheckPasswordHash(params.Password, hash_paswd)
+	// if err!=nil{
+	// 	respondWithError(w, http.StatusInternalServerError, "error in matching password and hash", err)
+	// }
+
+
 	// create the user with the help of api config
-	user, err := cfg.queries.CreateUser(r.Context(), req_email.Email)
+	user, err := cfg.queries.CreateUser(r.Context(), database.CreateUserParams{
+		HashedPassword: hash_paswd,
+		Email: params.Email,
+	})
 	if err != nil{
 		respondWithError(w, http.StatusInternalServerError, "error in creating user", err)
 	}

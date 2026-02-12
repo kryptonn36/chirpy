@@ -1,6 +1,7 @@
 -- +goose Up
 CREATE TABLE users(
     id uuid PRIMARY KEY UNIQUE,
+    hashed_password TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     email TEXT UNIQUE NOT NULL
