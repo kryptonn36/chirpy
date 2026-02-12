@@ -2,16 +2,27 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/kryptonn36/chirpy/internal/database"
 )
 
-func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
+type chirp_return struct{
+	Id uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body string `json:"body"`
+	UserId uuid.UUID `json:"user_id"`
+}
+
+func (cfg *apiConfig) handlerChirps(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
-	}
-	type returnVals struct {
-		Cleaned_body string `json:"cleaned_body"`
+		UserId uuid.UUID `json:"user_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -22,23 +33,44 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const maxChirpLength = 140
-	if len(params.Body) > maxChirpLength {
+	cleaned, err := cleanedUp(params.Body)
+	if err!=nil{
 		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
 		return
 	}
 
+	chirp, err := cfg.queries.CreateChirp(r.Context(), database.CreateChirpParams{
+		Body: cleaned,
+		UserID: params.UserId,
+	})
+	if err!=nil{
+		respondWithError(w, http.StatusInternalServerError, "error in creating chirp", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, chirp_return{
+		Id: chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body: chirp.Body,
+		UserId: chirp.UserID,
+	})
+}
+
+
+func cleanedUp(body string) (string, error){
+	const maxChirpLength = 140
+	if len(body) > maxChirpLength {
+		return "", fmt.Errorf("to much long chirp")
+	}
+
 	// var value []string
-	words := strings.Split(params.Body, " ")
+	words := strings.Split(body, " ")
 	for i, word := range words {
 		check := strings.ToLower(word)
 		if check == "kerfuffle" || check == "sharbert" || check == "fornax" {
 			words[i] = "****"
 		}
 	}
-
-	cleaned := strings.Join(words, " ")
-	respondWithJSON(w, http.StatusOK, returnVals{
-		Cleaned_body: cleaned,
-	})
+	return strings.Join(words," "), nil
 }
