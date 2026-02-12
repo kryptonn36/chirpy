@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kryptonn36/chirpy/internal/database"
+	// "github.com/kryptonn36/chirpy/internal/database"
 )
 
 type email_r struct{
@@ -18,6 +18,7 @@ type returnVals struct{
 	UpdatedAt time.Time `json:"updated_at"`
 	Email string `json:"email"`
 }
+
 func (cfg *apiConfig) handlerUsers(w http.ResponseWriter, r *http.Request){
 	// decode the error from json to struct to get email
 	req_email := email_r{}
@@ -28,12 +29,7 @@ func (cfg *apiConfig) handlerUsers(w http.ResponseWriter, r *http.Request){
 	}
 
 	// create the user with the help of api config
-	user, err := cfg.queries.CreateUser(r.Context(), database.CreateUserParams{
-		ID: uuid.New(),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Email: req_email.Email,
-	})
+	user, err := cfg.queries.CreateUser(r.Context(), req_email.Email)
 	if err != nil{
 		respondWithError(w, http.StatusInternalServerError, "error in creating user", err)
 	}
