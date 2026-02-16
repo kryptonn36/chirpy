@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kryptonn36/chirpy/internal/auth"
 )
@@ -35,10 +36,20 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request){
 		w.Write([]byte("Incorrect Password"))
 		return
 	}
+
+	expiring_time := time.Hour
+	if params.Expire_in_seconds != nil{
+		expiring_time = time.Duration(*params.Expire_in_seconds) * time.Second
+	}
+	jwtToken, err := auth.MakeJWT(user.ID, cfg.secret, expiring_time)
+	if err!=nil{
+		respondWithError(w,404, "Error in creating JWT Token", err)
+	}
 	respondWithJSON(w, http.StatusOK, returnVals{
 		Id: user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
+		Token: jwtToken,
 	})
 }

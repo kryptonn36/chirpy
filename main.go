@@ -13,18 +13,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type apiConfig struct {
-	fileserverHits atomic.Int32
-	queries *database.Queries
-	platform string
-}
-
 func main() {
 	godotenv.Load()
 	const filepathRoot = "."
 	const port = "8080"
 
-	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
 		log.Fatal("DB_URL must be set")
@@ -42,6 +35,7 @@ func main() {
 		fileserverHits: atomic.Int32{},
 		queries:        dbQueries,
 		platform:       platform,
+		secret:         os.Getenv("SECRET"),
 	}
 
 	mux := http.NewServeMux()
