@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -64,4 +66,21 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 	)
 	return i, err
+}
+
+const updateEmailPassword = `-- name: UpdateEmailPassword :exec
+UPDATE users 
+SET hashed_password=$1, email=$2, updated_at=NOW()
+WHERE id=$3
+`
+
+type UpdateEmailPasswordParams struct {
+	HashedPassword string
+	Email          string
+	ID             uuid.UUID
+}
+
+func (q *Queries) UpdateEmailPassword(ctx context.Context, arg UpdateEmailPasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updateEmailPassword, arg.HashedPassword, arg.Email, arg.ID)
+	return err
 }

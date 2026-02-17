@@ -20,7 +20,7 @@ type apiConfig struct {
 type paramater struct{
 	Password string `json:"password"`
 	Email string `json:"email"`
-	Expire_in_seconds *int `json:"expires_in_seconds`
+	// Expire_in_seconds *int `json:"expires_in_seconds`
 }
 type returnVals struct{
 	Id uuid.UUID `json:"id"`

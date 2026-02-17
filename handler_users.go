@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
 	"github.com/kryptonn36/chirpy/internal/auth"
 	"github.com/kryptonn36/chirpy/internal/database"
 )
@@ -43,4 +44,53 @@ func (cfg *apiConfig) handlerUsers(w http.ResponseWriter, r *http.Request){
 		Email: user.Email,
 	})
 
+}
+
+func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request){
+	accessToken, err := auth.GetBearerToken(r.Header)
+	if err!=nil{
+		respondWithError(w, 401, "access token not get by bear token function", err)
+		return
+	}
+	userId, err := auth.ValidateJWT(accessToken, cfg.secret)
+	if err!=nil{
+		respondWithError(w, 401, "Not a valid user", err)
+		return
+	}
+
+	params := paramater{}
+	decode := json.NewDecoder(r.Body)
+	err = decode.Decode(&params)
+	if err!=nil{
+		respondWithError(w, 401, "error in decoding json to update password", err)
+		return
+	}
+
+	hashString, err := auth.HashPassword(params.Password)
+	if err!=nil {
+		respondWithError(w, 401, "error in creating hash password to update password", err)
+		return
+	}
+
+	// tokenString,err := auth.MakeJWT(userId, cfg.secret, time.Hour)
+	// if err!=nil{
+	// 	respondWithError(w, 401, "error in making jwt to update password", err)
+	// }
+
+	err = cfg.queries.UpdateEmailPassword(r.Context(), database.UpdateEmailPasswordParams{
+		HashedPassword: hashString,
+		Email: params.Email,
+		ID: userId,
+	})
+	if err!=nil{
+		respondWithError(w, 401, "errror in updating email and password", err)
+		return
+	}
+	user, err:= cfg.queries.GetUserByEmail(r.Context(),params.Email)
+	respondWithJSON(w, 200, returnVals{
+		Id: userId,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email: user.Email,
+	})
 }
