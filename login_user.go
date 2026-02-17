@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kryptonn36/chirpy/internal/auth"
+	"github.com/kryptonn36/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request){
@@ -38,12 +39,28 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request){
 	}
 
 	expiring_time := time.Hour
-	if params.Expire_in_seconds != nil{
-		expiring_time = time.Duration(*params.Expire_in_seconds) * time.Second
-	}
+	// if params.Expire_in_seconds != nil{
+	// 	expiring_time = time.Duration(*params.Expire_in_seconds) * time.Second
+	// }
 	jwtToken, err := auth.MakeJWT(user.ID, cfg.secret, expiring_time)
 	if err!=nil{
 		respondWithError(w,404, "Error in creating JWT Token", err)
+		return
+	}
+
+	refreshToken, err := auth.MakeRefreshToken()
+	if err !=nil{
+		respondWithError(w, 404, "error in creating refresh token", err)
+		return
+	}
+	createrefreshToken, err := cfg.queries.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+		Token: refreshToken,
+		ExpiresAt: time.Now().Add(expiring_time*24*60),
+		UserID: user.ID,
+	})
+	if err!=nil{
+		respondWithError(w, 404, "error in creating refresh token", err)
+		return
 	}
 	respondWithJSON(w, http.StatusOK, returnVals{
 		Id: user.ID,
@@ -51,5 +68,6 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request){
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
 		Token: jwtToken,
+		RefreshToken: createrefreshToken.Token,
 	})
 }

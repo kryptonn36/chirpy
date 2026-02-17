@@ -24,7 +24,7 @@ func (cfg *apiConfig) handlerChirps(w http.ResponseWriter, r *http.Request) {
 
 	id, err := auth.ValidateJWT(token_string, cfg.secret)
 	if err!=nil{
-		respondWithError(w, 404, "error in getting id in handler chirps", err)
+		respondWithError(w, 401, "error in getting id in handler chirps", err)
 		return 
 	}
 
