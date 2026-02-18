@@ -20,7 +20,7 @@ VALUES (
     NOW(),
     $2
 )
-RETURNING id, hashed_password, created_at, updated_at, email
+RETURNING id, hashed_password, created_at, updated_at, email, is_chirpy_red
 `
 
 type CreateUserParams struct {
@@ -37,6 +37,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
@@ -51,7 +52,7 @@ func (q *Queries) DeleteUsers(ctx context.Context) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, hashed_password, created_at, updated_at, email FROM users
+SELECT id, hashed_password, created_at, updated_at, email, is_chirpy_red FROM users
 WHERE email=$1
 `
 
@@ -64,6 +65,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
